@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { TopBar } from '../../components/layout/TopBar';
 import { Button } from '../../components/common/Button';
+import { ErrorBanner } from '../../components/common/ErrorBanner';
 import { ROUTES } from '../../constants/routes';
 import { useLiveData } from '../../hooks/useLiveData';
 import { useNow } from '../../hooks/useNow';
@@ -13,7 +14,7 @@ import { WalkInForm } from './components/WalkInForm';
 import styles from './CheckInPage.module.css';
 
 export function CheckInPage() {
-  const { attendees, checkInAttendee, undoCheckIn, addWalkIn } = useLiveData();
+  const { attendees, sessions, error, checkInAttendee, undoCheckIn, addWalkIn } = useLiveData();
   const now = useNow();
 
   const [query, setQuery] = useState('');
@@ -28,13 +29,14 @@ export function CheckInPage() {
       const matchesFilter =
         filter === 'all' ||
         (filter === 'vip' && attendee.vip) ||
-        (filter !== 'vip' && attendee.status === filter);
+        (filter === 'checked_in' && attendee.checkedIn) ||
+        (filter === 'registered' && !attendee.checkedIn);
 
       if (!matchesFilter) return false;
       if (!normalizedQuery) return true;
 
       return (
-        attendee.name.toLowerCase().includes(normalizedQuery) ||
+        attendee.fullName.toLowerCase().includes(normalizedQuery) ||
         attendee.email.toLowerCase().includes(normalizedQuery) ||
         attendee.ticketId.toLowerCase().includes(normalizedQuery)
       );
@@ -44,13 +46,13 @@ export function CheckInPage() {
   const recentCheckIns = useMemo(
     () =>
       attendees
-        .filter((a) => a.status === 'checked_in' && a.checkedInAt)
-        .sort((a, b) => new Date(b.checkedInAt!).getTime() - new Date(a.checkedInAt!).getTime())
+        .filter((a) => a.checkedIn && a.checkInTime)
+        .sort((a, b) => new Date(b.checkInTime!).getTime() - new Date(a.checkInTime!).getTime())
         .slice(0, 6),
     [attendees],
   );
 
-  const checkedInCount = useMemo(() => attendees.filter((a) => a.status === 'checked_in').length, [attendees]);
+  const checkedInCount = useMemo(() => attendees.filter((a) => a.checkedIn).length, [attendees]);
 
   return (
     <>
@@ -63,6 +65,8 @@ export function CheckInPage() {
 
       <main className={`container ${styles.layout}`}>
         <div className={styles.main}>
+          {error && <ErrorBanner message={error} />}
+
           <SearchBar
             query={query}
             onQueryChange={setQuery}
@@ -79,8 +83,9 @@ export function CheckInPage() {
 
           {showWalkInForm && (
             <WalkInForm
-              onSubmit={(input) => {
-                addWalkIn(input);
+              sessions={sessions}
+              onSubmit={async (input) => {
+                await addWalkIn(input);
                 setShowWalkInForm(false);
               }}
               onCancel={() => setShowWalkInForm(false)}

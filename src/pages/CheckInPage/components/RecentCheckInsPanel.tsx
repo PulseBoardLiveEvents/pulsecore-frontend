@@ -37,12 +37,12 @@ export function RecentCheckInsPanel({ recentCheckIns, registeredCount, checkedIn
           <ul className={styles.list}>
             {recentCheckIns.map((attendee) => (
               <li key={attendee.id} className={styles.item}>
-                <Avatar name={attendee.name} tint={tintFromKey(attendee.id)} />
+                <Avatar name={attendee.fullName} tint={tintFromKey(String(attendee.id))} />
                 <div className={styles.itemInfo}>
-                  <span className={styles.itemName}>{attendee.name}</span>
-                  <span className={styles.itemMeta}>{attendee.session}</span>
+                  <span className={styles.itemName}>{attendee.fullName}</span>
+                  <span className={styles.itemMeta}>{attendee.sessionName}</span>
                 </div>
-                <span className={styles.itemTime}>{attendee.checkedInAt ? formatTimeAgo(attendee.checkedInAt, now) : ''}</span>
+                <span className={styles.itemTime}>{attendee.checkInTime ? formatTimeAgo(attendee.checkInTime, now) : ''}</span>
               </li>
             ))}
           </ul>

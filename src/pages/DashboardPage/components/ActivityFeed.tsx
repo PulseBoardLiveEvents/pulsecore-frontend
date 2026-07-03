@@ -7,7 +7,6 @@ const EVENT_DOT_CLASS: Record<ActivityEventType, string> = {
   check_in: 'success',
   vip_arrival: 'vip',
   capacity_alert: 'danger',
-  walk_in: 'primary',
 };
 
 interface ActivityFeedProps {

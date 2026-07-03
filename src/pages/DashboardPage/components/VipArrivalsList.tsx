@@ -19,14 +19,12 @@ export function VipArrivalsList({ vips }: VipArrivalsListProps) {
         <ul className={styles.list}>
           {vips.map((vip) => (
             <li key={vip.id} className={styles.item}>
-              <Avatar name={vip.name} tint={tintFromKey(vip.id)} />
+              <Avatar name={vip.fullName} tint={tintFromKey(String(vip.id))} />
               <div className={styles.info}>
-                <span className={styles.name}>{vip.name}</span>
-                <span className={styles.session}>{vip.session}</span>
+                <span className={styles.name}>{vip.fullName}</span>
+                <span className={styles.session}>{vip.sessionName}</span>
               </div>
-              <Badge tint={vip.status === 'checked_in' ? 'success' : 'neutral'}>
-                {vip.status === 'checked_in' ? 'Arrived' : 'Expected'}
-              </Badge>
+              <Badge tint={vip.checkedIn ? 'success' : 'neutral'}>{vip.checkedIn ? 'Arrived' : 'Expected'}</Badge>
             </li>
           ))}
         </ul>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { TopBar } from '../../components/layout/TopBar';
 import { StatCard } from '../../components/common/StatCard';
+import { ErrorBanner } from '../../components/common/ErrorBanner';
 import { ROUTES } from '../../constants/routes';
 import { useLiveData } from '../../hooks/useLiveData';
 import { useNow } from '../../hooks/useNow';
@@ -13,7 +14,7 @@ import { VipArrivalsList } from './components/VipArrivalsList';
 import styles from './DashboardPage.module.css';
 
 export function DashboardPage() {
-  const { attendees, sessions, activity } = useLiveData();
+  const { attendees, sessions, activity, error } = useLiveData();
   const now = useNow();
 
   const stats = useMemo(() => computeOverviewStats(attendees, sessions), [attendees, sessions]);
@@ -30,6 +31,7 @@ export function DashboardPage() {
       />
 
       <main className={`container ${styles.layout}`}>
+        {error && <ErrorBanner message={error} />}
         <CapacityAlertBanner sessionsAtCapacity={sessionsAtCapacity} />
 
         <div className={styles.statGrid}>

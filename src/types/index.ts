@@ -1,24 +1,36 @@
-export type AttendeeStatus = 'registered' | 'checked_in';
-
 export interface Attendee {
-  id: string;
-  name: string;
+  id: number;
+  fullName: string;
   email: string;
   ticketId: string;
-  session: string;
+  sessionId: number;
+  sessionName: string;
   vip: boolean;
-  status: AttendeeStatus;
-  checkedInAt: string | null;
+  checkedIn: boolean;
+  checkInTime: string | null;
+  registeredAt: string;
 }
 
 export interface Session {
-  id: string;
+  id: number;
   name: string;
   capacity: number;
   checkedIn: number;
 }
 
-export type ActivityEventType = 'check_in' | 'vip_arrival' | 'capacity_alert' | 'walk_in';
+export interface DashboardData {
+  capacity: number;
+  totalRegistered: number;
+  totalCheckedIn: number;
+  spotsRemaining: number;
+  vipCount: number;
+  vipCheckedInCount: number;
+  recentCheckIns: Attendee[];
+  sessions: Session[];
+  capacityReached: boolean;
+}
+
+export type ActivityEventType = 'check_in' | 'vip_arrival' | 'capacity_alert';
 
 export interface ActivityEvent {
   id: string;
@@ -30,7 +42,7 @@ export interface ActivityEvent {
 export type AttendeeFilter = 'all' | 'registered' | 'checked_in' | 'vip';
 
 export interface WalkInInput {
-  name: string;
+  fullName: string;
   email: string;
-  session: string;
+  sessionId: number;
 }

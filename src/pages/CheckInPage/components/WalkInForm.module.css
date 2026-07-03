@@ -48,3 +48,8 @@
   gap: 10px;
   margin-top: 4px;
 }
+
+.error {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger-600);
+}

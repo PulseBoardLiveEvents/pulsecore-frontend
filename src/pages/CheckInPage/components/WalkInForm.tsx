@@ -1,26 +1,40 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../../components/common/Button';
 import { Card } from '../../../components/common/Card';
-import { SESSION_NAMES } from '../../../constants/mockData';
-import type { WalkInInput } from '../../../types';
+import type { Session, WalkInInput } from '../../../types';
 import styles from './WalkInForm.module.css';
 
 interface WalkInFormProps {
-  onSubmit: (input: WalkInInput) => void;
+  sessions: Session[];
+  onSubmit: (input: WalkInInput) => Promise<void>;
   onCancel: () => void;
 }
 
-export function WalkInForm({ onSubmit, onCancel }: WalkInFormProps) {
-  const [name, setName] = useState('');
+export function WalkInForm({ sessions, onSubmit, onCancel }: WalkInFormProps) {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [session, setSession] = useState<string>(SESSION_NAMES[0]);
+  const [sessionId, setSessionId] = useState<number | ''>('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent) {
+  const effectiveSessionId = sessionId === '' ? sessions[0]?.id : sessionId;
+
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim() || !email.trim()) return;
-    onSubmit({ name: name.trim(), email: email.trim(), session });
-    setName('');
-    setEmail('');
+    if (!fullName.trim() || !email.trim() || !effectiveSessionId) return;
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit({ fullName: fullName.trim(), email: email.trim(), sessionId: effectiveSessionId });
+      setFullName('');
+      setEmail('');
+      setSessionId('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -32,8 +46,8 @@ export function WalkInForm({ onSubmit, onCancel }: WalkInFormProps) {
           <input
             id="walkin-name"
             type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
             placeholder="Jordan Ellis"
             required
           />
@@ -53,21 +67,27 @@ export function WalkInForm({ onSubmit, onCancel }: WalkInFormProps) {
 
         <div className={styles.field}>
           <label htmlFor="walkin-session">Session</label>
-          <select id="walkin-session" value={session} onChange={(event) => setSession(event.target.value)}>
-            {SESSION_NAMES.map((sessionName) => (
-              <option key={sessionName} value={sessionName}>
-                {sessionName}
+          <select
+            id="walkin-session"
+            value={effectiveSessionId ?? ''}
+            onChange={(event) => setSessionId(Number(event.target.value))}
+          >
+            {sessions.map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.name}
               </option>
             ))}
           </select>
         </div>
 
+        {error && <p className={styles.error}>{error}</p>}
+
         <div className={styles.actions}>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm">
-            Add and check in
+          <Button type="submit" variant="primary" size="sm" disabled={submitting}>
+            {submitting ? 'Adding…' : 'Add and check in'}
           </Button>
         </div>
       </form>

@@ -1,96 +1,130 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { INITIAL_ACTIVITY, INITIAL_ATTENDEES, INITIAL_SESSIONS } from '../constants/mockData';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { attendeesApi } from '../api/attendeesApi';
+import { LIVE_POLL_INTERVAL_MS } from '../constants/config';
 import { getCapacityLevel } from '../utils/stats';
 import { LiveDataContext, type LiveDataContextValue } from './LiveDataContextDefinition';
 import type { ActivityEvent, Attendee, Session, WalkInInput } from '../types';
 
-function createActivityEvent(partial: Omit<ActivityEvent, 'id' | 'timestamp'>): ActivityEvent {
-  return { ...partial, id: `act-${crypto.randomUUID()}`, timestamp: new Date().toISOString() };
+const MAX_ACTIVITY_EVENTS = 30;
+
+/**
+ * The backend has no activity-log endpoint, so "live activity" is derived
+ * client-side by diffing consecutive polls: a newly-true `checkedIn` flag
+ * becomes a check-in/VIP-arrival event, and a session crossing into "full"
+ * becomes a capacity alert. This also means activity is only ever emitted
+ * relative to what *this* browser has already fetched.
+ */
+function diffActivity(previousAttendees: Attendee[], nextAttendees: Attendee[], nextSessions: Session[]): ActivityEvent[] {
+  const previousById = new Map(previousAttendees.map((attendee) => [attendee.id, attendee]));
+  const events: ActivityEvent[] = [];
+
+  for (const attendee of nextAttendees) {
+    const before = previousById.get(attendee.id);
+    const justCheckedIn = attendee.checkedIn && !before?.checkedIn;
+    if (!justCheckedIn) continue;
+
+    events.push({
+      id: `evt-checkin-${attendee.id}-${attendee.checkInTime ?? Date.now()}`,
+      type: attendee.vip ? 'vip_arrival' : 'check_in',
+      message: attendee.vip
+        ? `${attendee.fullName} (VIP) checked in to ${attendee.sessionName}`
+        : `${attendee.fullName} checked in to ${attendee.sessionName}`,
+      timestamp: attendee.checkInTime ?? new Date().toISOString(),
+    });
+  }
+
+  for (const session of nextSessions) {
+    const previousCheckedIn = previousAttendees.filter((a) => a.sessionId === session.id && a.checkedIn).length;
+    const wasFull = previousCheckedIn >= session.capacity;
+    const isFull = getCapacityLevel(session) === 'full';
+    if (!wasFull && isFull) {
+      events.push({
+        id: `evt-capacity-${session.id}-${Date.now()}`,
+        type: 'capacity_alert',
+        message: `${session.name} reached capacity (${session.checkedIn}/${session.capacity})`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  return events;
 }
 
 export function LiveDataProvider({ children }: { children: ReactNode }) {
-  const [attendees, setAttendees] = useState<Attendee[]>(INITIAL_ATTENDEES);
-  const [sessions, setSessions] = useState<Session[]>(INITIAL_SESSIONS);
-  const [activity, setActivity] = useState<ActivityEvent[]>(INITIAL_ACTIVITY);
+  const [attendees, setAttendees] = useState<Attendee[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const checkInAttendee = useCallback((id: string) => {
-    setAttendees((prev) => {
-      const target = prev.find((a) => a.id === id);
-      if (!target || target.status === 'checked_in') return prev;
+  const attendeesRef = useRef<Attendee[]>([]);
+  const hasLoadedOnceRef = useRef(false);
 
-      const timestamp = new Date().toISOString();
-      const updated = prev.map((a) => (a.id === id ? { ...a, status: 'checked_in' as const, checkedInAt: timestamp } : a));
+  const refresh = useCallback(async () => {
+    try {
+      const [nextAttendees, nextSessions] = await Promise.all([
+        attendeesApi.getAttendees(),
+        attendeesApi.getSessions(),
+      ]);
 
-      setSessions((prevSessions) => {
-        const nextSessions = prevSessions.map((s) =>
-          s.name === target.session ? { ...s, checkedIn: s.checkedIn + 1 } : s,
-        );
-
-        const events: ActivityEvent[] = [];
-        events.push(
-          createActivityEvent({
-            type: target.vip ? 'vip_arrival' : 'check_in',
-            message: target.vip
-              ? `${target.name} (VIP) checked in to ${target.session}`
-              : `${target.name} checked in to ${target.session}`,
-          }),
-        );
-
-        const affectedSession = nextSessions.find((s) => s.name === target.session);
-        const previousSession = prevSessions.find((s) => s.name === target.session);
-        if (affectedSession && previousSession && getCapacityLevel(previousSession) !== 'full' && getCapacityLevel(affectedSession) === 'full') {
-          events.push(
-            createActivityEvent({
-              type: 'capacity_alert',
-              message: `${affectedSession.name} reached capacity (${affectedSession.checkedIn}/${affectedSession.capacity})`,
-            }),
-          );
+      if (hasLoadedOnceRef.current) {
+        const newEvents = diffActivity(attendeesRef.current, nextAttendees, nextSessions);
+        if (newEvents.length > 0) {
+          setActivity((prev) => [...newEvents.reverse(), ...prev].slice(0, MAX_ACTIVITY_EVENTS));
         }
+      }
+      hasLoadedOnceRef.current = true;
 
-        setActivity((prevActivity) => [...events.reverse(), ...prevActivity]);
-        return nextSessions;
-      });
-
-      return updated;
-    });
+      attendeesRef.current = nextAttendees;
+      setAttendees(nextAttendees);
+      setSessions(nextSessions);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reach the backend');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const undoCheckIn = useCallback((id: string) => {
-    setAttendees((prev) => {
-      const target = prev.find((a) => a.id === id);
-      if (!target || target.status !== 'checked_in') return prev;
+  useEffect(() => {
+    refresh();
+    const id = window.setInterval(refresh, LIVE_POLL_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [refresh]);
 
-      setSessions((prevSessions) =>
-        prevSessions.map((s) => (s.name === target.session ? { ...s, checkedIn: Math.max(0, s.checkedIn - 1) } : s)),
-      );
+  const checkInAttendee = useCallback(
+    (id: number) => {
+      attendeesApi
+        .checkIn(id)
+        .then(refresh)
+        .catch((err) => setError(err instanceof Error ? err.message : 'Failed to check in attendee'));
+    },
+    [refresh],
+  );
 
-      return prev.map((a) => (a.id === id ? { ...a, status: 'registered' as const, checkedInAt: null } : a));
-    });
-  }, []);
+  const undoCheckIn = useCallback(
+    (id: number) => {
+      attendeesApi
+        .undoCheckIn(id)
+        .then(refresh)
+        .catch((err) => setError(err instanceof Error ? err.message : 'Failed to undo check-in'));
+    },
+    [refresh],
+  );
 
-  const addWalkIn = useCallback((input: WalkInInput) => {
-    const newAttendee: Attendee = {
-      id: `att-${crypto.randomUUID()}`,
-      name: input.name,
-      email: input.email,
-      ticketId: `WLK-${Math.floor(1000 + Math.random() * 9000)}`,
-      session: input.session,
-      vip: false,
-      status: 'checked_in',
-      checkedInAt: new Date().toISOString(),
-    };
-
-    setAttendees((prev) => [newAttendee, ...prev]);
-    setSessions((prev) => prev.map((s) => (s.name === input.session ? { ...s, checkedIn: s.checkedIn + 1 } : s)));
-    setActivity((prev) => [
-      createActivityEvent({ type: 'walk_in', message: `${newAttendee.name} added as a walk-in to ${input.session}` }),
-      ...prev,
-    ]);
-  }, []);
+  // Left uncaught (unlike checkIn/undoCheckIn above) so the walk-in form can
+  // surface validation errors like "duplicate email" inline, next to the field.
+  const addWalkIn = useCallback(
+    async (input: WalkInInput) => {
+      await attendeesApi.addWalkIn(input);
+      await refresh();
+    },
+    [refresh],
+  );
 
   const value = useMemo<LiveDataContextValue>(
-    () => ({ attendees, sessions, activity, checkInAttendee, undoCheckIn, addWalkIn }),
-    [attendees, sessions, activity, checkInAttendee, undoCheckIn, addWalkIn],
+    () => ({ attendees, sessions, activity, isLoading, error, checkInAttendee, undoCheckIn, addWalkIn }),
+    [attendees, sessions, activity, isLoading, error, checkInAttendee, undoCheckIn, addWalkIn],
   );
 
   return <LiveDataContext.Provider value={value}>{children}</LiveDataContext.Provider>;

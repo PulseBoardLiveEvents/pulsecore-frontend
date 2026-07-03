@@ -29,8 +29,8 @@ export interface OverviewStats {
 export function computeOverviewStats(attendees: Attendee[], sessions: Session[]): OverviewStats {
   return {
     registered: attendees.length,
-    checkedIn: attendees.filter((a) => a.status === 'checked_in').length,
+    checkedIn: attendees.filter((a) => a.checkedIn).length,
     sessionsAtCapacity: getSessionsAtCapacity(sessions).length,
-    vipsArrived: attendees.filter((a) => a.vip && a.status === 'checked_in').length,
+    vipsArrived: attendees.filter((a) => a.vip && a.checkedIn).length,
   };
 }

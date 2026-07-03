@@ -17,9 +17,9 @@ export function AttendeeTable({ attendees }: AttendeeTableProps) {
 
     return attendees.filter(
       (attendee) =>
-        attendee.name.toLowerCase().includes(normalizedQuery) ||
+        attendee.fullName.toLowerCase().includes(normalizedQuery) ||
         attendee.email.toLowerCase().includes(normalizedQuery) ||
-        attendee.session.toLowerCase().includes(normalizedQuery),
+        attendee.sessionName.toLowerCase().includes(normalizedQuery),
     );
   }, [attendees, query]);
 
@@ -51,16 +51,16 @@ export function AttendeeTable({ attendees }: AttendeeTableProps) {
               <tr key={attendee.id}>
                 <td>
                   <div className={styles.nameCell}>
-                    <span>{attendee.name}</span>
+                    <span>{attendee.fullName}</span>
                     {attendee.vip && <Badge tint="vip">VIP</Badge>}
                   </div>
                   <span className={styles.email}>{attendee.email}</span>
                 </td>
-                <td>{attendee.session}</td>
+                <td>{attendee.sessionName}</td>
                 <td className={styles.ticket}>{attendee.ticketId}</td>
                 <td>
-                  <Badge tint={attendee.status === 'checked_in' ? 'success' : 'neutral'} dot>
-                    {attendee.status === 'checked_in' ? 'Checked in' : 'Registered'}
+                  <Badge tint={attendee.checkedIn ? 'success' : 'neutral'} dot>
+                    {attendee.checkedIn ? 'Checked in' : 'Registered'}
                   </Badge>
                 </td>
               </tr>
