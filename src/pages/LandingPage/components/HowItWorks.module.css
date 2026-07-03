@@ -1,0 +1,55 @@
+.section {
+  padding-block: 88px;
+}
+
+.heading {
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-size: var(--font-size-2xl);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stepNumber {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary-500);
+  letter-spacing: 0.04em;
+}
+
+.stepTitle {
+  font-size: var(--font-size-lg);
+}
+
+.stepDescription {
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}

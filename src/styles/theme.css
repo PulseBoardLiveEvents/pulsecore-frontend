@@ -1,0 +1,92 @@
+/*
+ * Design tokens — the single source of truth for color, radius, shadow and
+ * typography. Change a value here and it propagates everywhere; nothing in
+ * a component file should hardcode a color.
+ */
+:root {
+  color-scheme: light;
+
+  /* Brand — indigo/blue */
+  --color-primary-50: oklch(96% 0.015 265);
+  --color-primary-100: oklch(92% 0.035 265);
+  --color-primary-200: oklch(85% 0.06 265);
+  --color-primary-400: oklch(64% 0.16 265);
+  --color-primary-500: oklch(55% 0.17 265);
+  --color-primary-600: oklch(48% 0.17 265);
+  --color-primary-700: oklch(40% 0.16 265);
+
+  /* Success — green (checked-in state) */
+  --color-success-50: oklch(95% 0.03 145);
+  --color-success-100: oklch(90% 0.06 145);
+  --color-success-500: oklch(60% 0.15 145);
+  --color-success-600: oklch(50% 0.14 145);
+
+  /* Warning — amber (approaching capacity) */
+  --color-warning-50: oklch(96% 0.03 80);
+  --color-warning-100: oklch(90% 0.08 75);
+  --color-warning-500: oklch(70% 0.16 60);
+  --color-warning-600: oklch(60% 0.17 45);
+
+  /* Danger — red (at/over capacity, not-registered) */
+  --color-danger-50: oklch(95% 0.03 25);
+  --color-danger-100: oklch(90% 0.07 25);
+  --color-danger-500: oklch(60% 0.19 25);
+  --color-danger-600: oklch(52% 0.19 25);
+
+  /* VIP — gold */
+  --color-vip-50: oklch(96% 0.03 80);
+  --color-vip-100: oklch(90% 0.06 80);
+  --color-vip-500: oklch(65% 0.14 80);
+  --color-vip-600: oklch(55% 0.13 80);
+
+  /* Neutrals */
+  --color-neutral-0: oklch(100% 0 0);
+  --color-neutral-50: oklch(98% 0.004 260);
+  --color-neutral-100: oklch(96% 0.006 260);
+  --color-neutral-200: oklch(92% 0.006 260);
+  --color-neutral-300: oklch(85% 0.008 260);
+  --color-neutral-400: oklch(70% 0.01 260);
+  --color-neutral-500: oklch(55% 0.014 260);
+  --color-neutral-600: oklch(42% 0.016 260);
+  --color-neutral-700: oklch(32% 0.018 260);
+  --color-neutral-800: oklch(22% 0.016 260);
+  --color-neutral-900: oklch(14% 0.012 260);
+
+  /* Semantic surface tokens (what components should actually reference) */
+  --color-bg: var(--color-neutral-50);
+  --color-surface: var(--color-neutral-0);
+  --color-surface-sunken: var(--color-neutral-100);
+  --color-border: var(--color-neutral-200);
+  --color-border-strong: var(--color-neutral-300);
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-muted: var(--color-neutral-400);
+  --color-text-on-brand: var(--color-neutral-0);
+
+  /* Typography */
+  --font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 2.75rem;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px oklch(20% 0 0 / 0.04);
+  --shadow-md: 0 4px 16px oklch(20% 0 0 / 0.07);
+  --shadow-lg: 0 12px 32px oklch(20% 0 0 / 0.1);
+
+  /* Layout */
+  --container-max-width: 1200px;
+  --header-height: 68px;
+  --transition-fast: 150ms ease;
+  --transition-base: 220ms ease;
+}
