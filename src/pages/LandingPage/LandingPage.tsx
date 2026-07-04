@@ -1,6 +1,7 @@
 import { NavBar } from '../../components/layout/NavBar';
 import { Footer } from '../../components/layout/Footer';
 import { Hero } from './components/Hero';
+import { QuickActions } from './components/QuickActions';
 import { StatsStrip } from './components/StatsStrip';
 import { HowItWorks } from './components/HowItWorks';
 import { FeaturesGrid } from './components/FeaturesGrid';
@@ -12,6 +13,7 @@ export function LandingPage() {
       <NavBar />
       <main>
         <Hero />
+        <QuickActions />
         <StatsStrip />
         <HowItWorks />
         <FeaturesGrid />

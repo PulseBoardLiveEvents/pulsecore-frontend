@@ -46,3 +46,15 @@ export interface WalkInInput {
   email: string;
   sessionId: number;
 }
+
+export interface RegisterInput {
+  fullName: string;
+  email: string;
+  sessionId: number;
+  vip: boolean;
+}
+
+export interface CreateSessionInput {
+  name: string;
+  capacity: number;
+}

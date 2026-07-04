@@ -1,0 +1,32 @@
+.section {
+  padding-block: 40px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-size: var(--font-size-lg);
+}
+
+.cardDescription {
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

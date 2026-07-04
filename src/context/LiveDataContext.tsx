@@ -3,7 +3,7 @@ import { attendeesApi } from '../api/attendeesApi';
 import { LIVE_POLL_INTERVAL_MS } from '../constants/config';
 import { getCapacityLevel } from '../utils/stats';
 import { LiveDataContext, type LiveDataContextValue } from './LiveDataContextDefinition';
-import type { ActivityEvent, Attendee, Session, WalkInInput } from '../types';
+import type { ActivityEvent, Attendee, CreateSessionInput, RegisterInput, Session, WalkInInput } from '../types';
 
 const MAX_ACTIVITY_EVENTS = 30;
 
@@ -122,9 +122,49 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const registerAttendee = useCallback(
+    async (input: RegisterInput) => {
+      const attendee = await attendeesApi.register(input);
+      await refresh();
+      return attendee;
+    },
+    [refresh],
+  );
+
+  const createSession = useCallback(
+    async (input: CreateSessionInput) => {
+      const session = await attendeesApi.createSession(input);
+      await refresh();
+      return session;
+    },
+    [refresh],
+  );
+
   const value = useMemo<LiveDataContextValue>(
-    () => ({ attendees, sessions, activity, isLoading, error, checkInAttendee, undoCheckIn, addWalkIn }),
-    [attendees, sessions, activity, isLoading, error, checkInAttendee, undoCheckIn, addWalkIn],
+    () => ({
+      attendees,
+      sessions,
+      activity,
+      isLoading,
+      error,
+      checkInAttendee,
+      undoCheckIn,
+      addWalkIn,
+      registerAttendee,
+      createSession,
+    }),
+    [
+      attendees,
+      sessions,
+      activity,
+      isLoading,
+      error,
+      checkInAttendee,
+      undoCheckIn,
+      addWalkIn,
+      registerAttendee,
+      createSession,
+    ],
   );
 
   return <LiveDataContext.Provider value={value}>{children}</LiveDataContext.Provider>;

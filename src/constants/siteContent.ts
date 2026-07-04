@@ -82,6 +82,21 @@ export const CTA_CONTENT = {
 export const NAV_LINKS = [
   { label: 'Check-in desk', to: ROUTES.checkIn },
   { label: 'Dashboard', to: ROUTES.dashboard },
+  { label: 'Register', to: ROUTES.register },
+  { label: 'Create session', to: ROUTES.createEvent },
+];
+
+export const QUICK_ACTIONS = [
+  {
+    title: 'Create a new session',
+    description: 'Spin up a new session with its own capacity so attendees have something to register for.',
+    cta: { label: 'Create a session', to: ROUTES.createEvent },
+  },
+  {
+    title: 'Register for a session',
+    description: 'Pre-register an attendee ahead of the event — they can check in later at the front desk.',
+    cta: { label: 'Register now', to: ROUTES.register },
+  },
 ];
 
 export const FOOTER_CONTENT = {
